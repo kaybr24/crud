@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h1>Update Movie</h1>
+
+  <p>Use "None" or "null" to set a field to null. Only Title, Release Year and Director can be null.
+
+    <form method=POST action="{{url_for('update', tt=movieDict.tt)}}">
+      <table>
+        <tr>
+          <td><label for="movie-title">Title</label></td>
+          <td><input id="movie-title" name='movie-title' value='{{movieDict.title}}'></td> 
+        </tr>
+        <tr>
+          <td><label for="movie-tt">Movie id</label></td>
+          <td><input id="movie-tt" name='movie-tt' value='{{movieDict.tt}}'></td>
+        </tr>
+        <tr>
+          <td><label for="movie-release">Release year</label></td>
+          <td><input id="movie-release" name='movie-release' value='{{movieDict.release}}'></td>
+        </tr>
+        <tr>
+          <td><label for="movie-addedby">Added by</label></td>
+          <td><input id="movie-addedby" name='movie-addedby' value='{{movieDict.staffid}}'></td>
+        </tr>
+        <tr>
+          <td><label for="movie-director">Director ID</label></td>
+          <td><input id="movie-director" name='movie-director' value='{{movieDict.directorid}}'></td>
+        </tr>
+        <tr>
+          <td><label>Director</label></td>
+          <td>{{movieDict.director}}</td>
+        </tr>
+      </table>
+      <input type="submit" name="submit" value="update">
+      <input type="submit" name="submit" value="delete">
+    </form>
+
+{% endblock %}

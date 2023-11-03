@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h1>Search by Title</h1>
+
+<form method=POST action="{{url_for('search')}}">
+    <label for="search-title">Title: </label>
+    <input id="search-title" name="search-title" value="">
+    <input type="submit" name="submit-btn" value="Search">
+</form>
+
+{% endblock %}
