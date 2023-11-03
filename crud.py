@@ -1,6 +1,48 @@
 import cs304dbi as dbi
 myStaffId = 8570
 
+def update_movie(conn, formData, tt_old):
+    """
+    Change the data associated with a movie whose tt is movDict.get('tt')
+    Assumes the all data inputs are valid
+    """
+    cursOld = dbi.dict_cursor(conn)
+    cursNew = dbi.dict_cursor(conn)
+    tt_new = formData.get('movie-tt')
+    cursOld.execute(# Find the movie's previous data
+        """
+        select tt, title, `release`, director, addedby
+        from movie
+        where tt = %s;
+        """, [tt_old]
+    )
+    oldMovie = cursOld.fetchone()
+    # check whether the proposed tt is associated with another movie
+    ttTest = check_tt_exists(tt_new)
+    if ttTest != None: # tt is associated with another movie
+        ttIsUnique = False
+    else: # tt is available
+        ttIsUnique = True
+    # if tt has not changed or tt is unique, proceed
+    # if tt is not unique (is associated with another show), tell app.py to flash an error
+    if (tt_old == tt_new) or (ttIsUnique):
+    # make those changes
+    else:
+
+def delete_movie(conn, tt):
+    """
+    Remove movie with given tt from the database
+    Assumes the tt is valid
+    """
+    curs = dbi.dict_cursor(conn)
+    curs.execute(
+        """
+        delete from movie
+        where tt = %s;
+        """, [tt]
+    )
+    conn.commit() # Makes the deletion permanent
+
 def movie_details(conn, tt):
     """
     Returns a dict with information about a given movie based on the tt
@@ -59,7 +101,8 @@ def insert_movie(conn, formData):
 if __name__ == '__main__':
     dbi.conf('kb102_db')
     conn = dbi.connect()
-    print(movie_details(conn, 555))
+    #print(movie_details(conn, 555))
+    print(delete_movie(conn, 555))
     # fakeMovie = {'tt':556, 'title':'The Worst Movie You Ever Wasted 3 Hours On', 'addedby':myStaffId}
     # success = insert_movie(conn, fakeMovie)
     # print(success)
