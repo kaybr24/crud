@@ -42,11 +42,18 @@ def insert():
     else: # Post - redirect
         movieDict = request.form
         conn = dbi.connect()
-        confirmation = crud.insert_movie(conn, movieDict) # Insert movie into database
-        print(confirmation)
+        tt = movieDict.get('movie-tt')
+        existingMovieTitle = crud.check_tt_exists(conn, tt)
+        # Before inserting, check that a movie with this tt does not already exist in the database
+        if existingMovieTitle != None: # a movie with this tt already exists
+            title = existingMovieTitle.get('title')
+            flash(f"ERROR: movie exists; The movie, {title}, with tt = {tt} is already in database.")
+        else: # No movie with this tt exists in the database
+            confirmation = crud.insert_movie(conn, movieDict) # Insert movie into database
+            print(confirmation) # to console
+            title = movieDict.get('movie-title')
+            flash("Movie {title} inserted.")
         # redirect to update page for reloads
-        tt = request.form.get('movie-tt')
-        # redirect is a new import from flask
         return redirect(url_for('update',tt=tt))
 
 @app.route('/search/')
