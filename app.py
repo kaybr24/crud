@@ -52,7 +52,7 @@ def insert():
             confirmation = crud.insert_movie(conn, movieDict) # Insert movie into database
             print(confirmation) # to console
             title = movieDict.get('movie-title')
-            flash("Movie {title} inserted.")
+            flash(f"Movie {title} inserted.")
         # redirect to update page for reloads
         return redirect(url_for('update',tt=tt))
 
@@ -74,7 +74,7 @@ def select():
     '''
     return render_template('select_menu.html', page_title='Select Incomplete Movie')
 
-@app.route('/update/<int:tt>') # require an integer
+@app.route('/update/<int:tt>', method=['GET','POST']) # require an integer
 def update(tt):
     '''
     Shows a form for updating a particular movie, with the TT of the movie in the URL on GET.
@@ -82,6 +82,16 @@ def update(tt):
     '''
     conn = dbi.connect()
     movieDict = crud.movie_details(conn, tt)
+    tt_old = movieDict.get('tt')
+    if request.method == 'POST':
+        # if updating the form
+        # check new tt (is there an existing movie with this tt? if yes, flash error, if no, proceed)
+        # check whether director nm exists
+        # convert values to None
+        # 
+        # if deleting the form
+        # find movie with the given tt and delete the row from the movie table
+        flash(f'TO DO: Movie ({movieDict.get('title')}) was updated successfully')
     return render_template('update_form.html', page_title='Fill in Missing Data', movieDict = movieDict)
 
 # You will probably not need the routes below, but they are here
