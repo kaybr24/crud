@@ -80,7 +80,8 @@ def update(tt):
     Shows a form for updating a particular movie, with the TT of the movie in the URL on GET.
     On POST does the update and shows the form again.
     '''
-    movieDict={}
+    conn = dbi.connect()
+    movieDict = crud.movie_details(conn, tt)
     return render_template('update_form.html', page_title='Fill in Missing Data', movieDict = movieDict)
 
 # You will probably not need the routes below, but they are here

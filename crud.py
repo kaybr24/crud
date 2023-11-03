@@ -1,6 +1,31 @@
 import cs304dbi as dbi
 myStaffId = 8570
 
+def movie_details(conn, tt):
+    """
+    Returns a dict with information about a given movie based on the tt
+    """
+    cursMovie = dbi.dict_cursor(conn)
+    cursDirector = dbi.dict_cursor(conn)
+    cursMovie.execute( # find the given movie
+        '''
+        select tt, title, `release`, director as 'directorid', addedby
+        from movie
+        where tt = %s;
+        ''', [tt]
+    )
+    cursDirector.execute( # find the given movie
+        '''
+        select name
+        from person inner join movie on (director = nm)
+        where tt = %s;
+        ''', [tt]
+    )
+    movDict = cursMovie.fetchone()
+    director = cursDirector.fetchone()
+    movDict['directorName'] = director.get('name') if (director != None) else ('none specified')
+    return movDict
+
 def check_tt_exists(conn, tt):
     """
     If a movie with the given tt is in the database, return a dictionary containing the title of the movie
@@ -34,7 +59,7 @@ def insert_movie(conn, formData):
 if __name__ == '__main__':
     dbi.conf('kb102_db')
     conn = dbi.connect()
-    check_tt_exists(conn, 5555)
+    print(movie_details(conn, 555))
     # fakeMovie = {'tt':556, 'title':'The Worst Movie You Ever Wasted 3 Hours On', 'addedby':myStaffId}
     # success = insert_movie(conn, fakeMovie)
     # print(success)
