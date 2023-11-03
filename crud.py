@@ -1,5 +1,5 @@
 import cs304dbi as dbi
-myStaffId = 8570
+myStaffId = 8620
 
 def movie_details(conn, tt):
     """
@@ -57,7 +57,7 @@ def insert_movie(conn, formData):
 
 
 if __name__ == '__main__':
-    dbi.conf('kb102_db')
+    dbi.conf('je100_db')
     conn = dbi.connect()
     print(movie_details(conn, 555))
     # fakeMovie = {'tt':556, 'title':'The Worst Movie You Ever Wasted 3 Hours On', 'addedby':myStaffId}
