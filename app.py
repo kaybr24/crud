@@ -74,7 +74,7 @@ def select():
     '''
     return render_template('select_menu.html', page_title='Select Incomplete Movie')
 
-@app.route('/update/<int:tt>', method=['GET','POST']) # require an integer
+@app.route('/update/<int:tt>', methods=['GET','POST']) # require an integer
 def update(tt):
     '''
     Shows a form for updating a particular movie, with the TT of the movie in the URL on GET.
@@ -91,7 +91,14 @@ def update(tt):
         # 
         # if deleting the form
         # find movie with the given tt and delete the row from the movie table
-        flash(f'TO DO: Movie ({movieDict.get('title')}) was updated successfully')
+        if request.form.get('submit') == 'update':
+            updateResult = crud.update_movie(conn, request.form, tt_old)
+        elif request.form.get('submit') == 'delete':
+            crud.delete_movie(conn, tt_old)
+            flash(f"Movie ({movieDict.get('title')}) was deleted successfully")
+        else:
+            flash(f"ERROR: neither update or delete")
+        
     return render_template('update_form.html', page_title='Fill in Missing Data', movieDict = movieDict)
 
 # You will probably not need the routes below, but they are here
