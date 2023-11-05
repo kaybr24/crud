@@ -7,7 +7,9 @@
     <label for="menu-tt">Movies without release dates or directors:</label>
     <select id="menu-tt" name="menu-tt">
         <option value="none">Choose One</option>
-        <!--Fill out the drop down menu with incomplete movies-->
+        {% for show in data %}
+        <option value="{{show.tt}}">{{show.title}}</option>
+        {% endfor %}
     </select>
     <input type="submit" name="submit-btn" value="Choose">
 </form>

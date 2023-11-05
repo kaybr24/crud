@@ -66,13 +66,19 @@ def search():
     '''
     return render_template("search_form.html", page_title = 'Search for a Movie')
 
-@app.route('/select/')
+@app.route('/select/', methods=['GET', 'POST'])
 def select():
     '''
     On GET shows a menu of movies with incomplete information, (null value for either release or director)
     On POST redirects to the /update/nnn page for that movie
     '''
-    return render_template('select_menu.html', page_title='Select Incomplete Movie')
+    conn = dbi.connect()
+    if request.method == 'GET':
+        incomplete_movies = crud.find_incomplete_movies(conn)
+        return render_template('select_menu.html', page_title='Select Incomplete Movie', data = incomplete_movies)
+    else: # method = post
+        tt = request.form.get('menu-tt')
+        return redirect(url_for('update',tt=tt))
 
 @app.route('/update/<int:tt>', methods=['GET','POST']) # require an integer
 def update(tt):
@@ -179,7 +185,7 @@ if __name__ == '__main__':
         assert(port>1024)
     else:
         port = os.getuid()
-    db_to_use = 'je100_db' 
+    db_to_use = 'kb102_db' 
     print('will connect to {}'.format(db_to_use))
     dbi.conf(db_to_use)
     app.debug = True

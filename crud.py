@@ -1,7 +1,21 @@
 from flask import flash
 
 import cs304dbi as dbi
-myStaffId = 8620
+myStaffId = 8570
+
+def find_incomplete_movies(conn):
+    """
+    Returns the titles and tts of movies without release dates or without directors
+    """
+    curs = dbi.dict_cursor(conn)
+    curs.execute(
+        """
+        select tt, title from movie 
+        where (director is null) or (`release` is null);
+        """
+    )
+    return curs.fetchall()
+
 
 def update_movie(conn, formData, tt_old):
     """
@@ -43,7 +57,7 @@ def update_movie(conn, formData, tt_old):
             where tt = %s;
         """, [tt_new, formData.get('movie-title'), formData.get('movie-release'), formData.get('movie-director'), newStaff, tt_old]
         )
-
+        conn.commit()
         flash(f"TO DO: Movie ({formData.get('movie-title')}) was updated successfully")   
     else: # if tt is not unique (is associated with another show), tell app.py to flash an error
         flash(f"Movie already exists.")
@@ -140,11 +154,14 @@ def insert_movie(conn, formData):
 
 
 if __name__ == '__main__':
-    dbi.conf('je100_db')
+    dbi.conf('kb102_db')
     conn = dbi.connect()
     #print(movie_details(conn, 555))
-    print(delete_movie(conn, 555))
+    #print(delete_movie(conn, 555))
     # fakeMovie = {'tt':556, 'title':'The Worst Movie You Ever Wasted 3 Hours On', 'addedby':myStaffId}
     # success = insert_movie(conn, fakeMovie)
+    shows = find_incomplete_movies(conn)
+    for i in range(10):
+        print(f"{shows.get('title')} has tt {shows.get('tt')}")
     # print(success)
     
