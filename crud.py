@@ -1,7 +1,7 @@
 from flask import flash
 
 import cs304dbi as dbi
-myStaffId = 8570
+myStaffId = 8620
 
 def find_incomplete_movies(conn):
     """
@@ -22,6 +22,7 @@ def update_movie(conn, formData, tt_old):
     Change the data associated with a movie whose tt is movDict.get('tt')
     Assumes the all data inputs are valid
     """
+    
     cursOld = dbi.dict_cursor(conn)
     cursNew = dbi.dict_cursor(conn)
     tt_new = int(formData.get('movie-tt'))
@@ -33,8 +34,17 @@ def update_movie(conn, formData, tt_old):
         """, [tt_old]
     )
     oldMovie = cursOld.fetchone()
+
+    # convert string 'None' to actual Nones
+    movieData = {}
+    for elt in formData:
+        if formData.get(elt) == 'None':
+            movieData[elt] = None
+        else:
+            movieData[elt] = formData.get(elt)
+
     #check that staff exists, if they do exist, proceed and otherwise flash error
-    newStaff = formData.get('movie-addedby')
+    newStaff = movieData.get('movie-addedby')
     if not (check_addedby_exists(conn, newStaff)):
         newStaff = oldMovie.get('addedby')
         flash(f"That staff member doesn't exist!")
@@ -50,15 +60,17 @@ def update_movie(conn, formData, tt_old):
     if (tt_old == tt_new) or (ttIsUnique):
         # make those changes
         # TODO: check for director accuracy and addedby accuracy, also check that tt is a valid number
+
+
         cursNew.execute(# Update movie with new data
         """
             update movie
             set tt = %s, title = %s, `release` = %s, director = %s, addedby = %s
             where tt = %s;
-        """, [tt_new, formData.get('movie-title'), formData.get('movie-release'), formData.get('movie-director'), newStaff, tt_old]
+        """, [tt_new, movieData.get('movie-title'), movieData.get('movie-release'), movieData.get('movie-director'), newStaff, tt_old]
         )
         conn.commit()
-        flash(f"TO DO: Movie ({formData.get('movie-title')}) was updated successfully")   
+        flash(f"TO DO: Movie ({movieData.get('movie-title')}) was updated successfully")   
     else: # if tt is not unique (is associated with another show), tell app.py to flash an error
         flash(f"Movie already exists.")
 
@@ -154,7 +166,7 @@ def insert_movie(conn, formData):
 
 
 if __name__ == '__main__':
-    dbi.conf('kb102_db')
+    dbi.conf('je100_db')
     conn = dbi.connect()
     #print(movie_details(conn, 555))
     #print(delete_movie(conn, 555))
