@@ -102,9 +102,10 @@ def update(tt):
         elif request.form.get('submit') == 'delete':
             crud.delete_movie(conn, tt_old)
             flash(f"Movie ({movieDict.get('title')}) was deleted successfully")
+            return redirect(url_for('home'))
         else:
             flash(f"ERROR: neither update or delete")
-        
+    movieDict = crud.movie_details(conn, tt)
     return render_template('update_form.html', page_title='Fill in Missing Data', movieDict = movieDict)
 
 # You will probably not need the routes below, but they are here
