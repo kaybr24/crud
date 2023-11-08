@@ -27,7 +27,7 @@ def home():
     Shows the basic navigation. 
     You can redirect to here when you have no place better to go, such as when a movie is deleted.
     '''
-    return render_template('main.html',title='Hello')
+    return render_template('main.html', page_title='WMDB Interactions')
 
 @app.route('/insert/', methods=["GET", "POST"])
 def insert():
@@ -108,61 +108,6 @@ def update(tt):
     else: # request.method == 'GET':
         movieDict = crud.movie_details(conn, tt)
     return render_template('update_form.html', page_title='Fill in Missing Data', movieDict = movieDict)
-
-# You will probably not need the routes below, but they are here
-# just in case. Please delete them if you are not using them
-
-
-@app.route('/country/<city>')
-def country(city):
-    if city in countries.known:
-        return render_template(
-            'msg.html',
-            msg=('{city} is the capital of {country}'
-                 .format(city=city,
-                         country=countries.known[city])))
-    else:
-        return render_template(
-            'msg.html',
-            msg=('''I don't know the country whose capital is {city}'''
-                 .format(city=city)))
-
-@app.route('/greet/', methods=["GET", "POST"])
-def greet():
-    if request.method == 'GET':
-        return render_template('greet.html', title='Customized Greeting')
-    else:
-        try:
-            username = request.form['username'] # throws error if there's trouble
-            flash('form submission successful')
-            return render_template('greet.html',
-                                   title='Welcome '+username,
-                                   name=username)
-
-        except Exception as err:
-            flash('form submission error'+str(err))
-            return redirect( url_for('index') )
-
-@app.route('/formecho/', methods=['GET','POST'])
-def formecho():
-    if request.method == 'GET':
-        return render_template('form_data.html',
-                               method=request.method,
-                               form_data=request.args)
-    elif request.method == 'POST':
-        return render_template('form_data.html',
-                               method=request.method,
-                               form_data=request.form)
-    else:
-        # maybe PUT?
-        return render_template('form_data.html',
-                               method=request.method,
-                               form_data={})
-
-@app.route('/testform/')
-def testform():
-    # these forms go to the formecho route
-    return render_template('testform.html')
 
 
 if __name__ == '__main__':
