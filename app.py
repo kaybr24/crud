@@ -118,7 +118,8 @@ if __name__ == '__main__':
         assert(port>1024)
     else:
         port = os.getuid()
-    db_to_use = 'kb102_db' 
+        database = os.getlogin() + '_db'
+    db_to_use = database
     print('will connect to {}'.format(db_to_use))
     dbi.conf(db_to_use)
     app.debug = True

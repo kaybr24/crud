@@ -236,7 +236,8 @@ def insert_movie(conn, formData):
 
 
 if __name__ == '__main__':
-    dbi.conf('kb102_db')
+    database = os.getlogin() + '_db'
+    dbi.conf(database)
     conn = dbi.connect()
     #print(movie_details(conn, 555))
     #print(delete_movie(conn, 555))
