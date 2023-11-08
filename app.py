@@ -87,44 +87,31 @@ def update(tt):
     On POST does the update and shows the form again.
     '''
     conn = dbi.connect()
-    movieDict = crud.movie_details(conn, tt)
-    tt_old = movieDict.get('tt')
+    tt_old = tt
     if request.method == 'POST':
-        # if updating the form
-        # check new tt (is there an existing movie with this tt? if yes, flash error, if no, proceed)
-        # check whether director nm exists
-        # convert values to None
-        # 
-        # if deleting the form
-        # find movie with the given tt and delete the row from the movie table
-        if request.form.get('submit') == 'update':
-            updateResult = crud.update_movie(conn, request.form, tt_old)
-        elif request.form.get('submit') == 'delete':
+        
+        # (TO DO) convert values to None
+
+        if request.form.get('submit') == 'update': # if updating the form, check values
+            tt_new = crud.update_movie(conn, request.form, tt_old)
+            if (tt_new != tt_old): # if tt changed, redirect to new page
+                return redirect(url_for('update', tt=tt_new))
+            else: # update data for page rendering
+                movieDict = crud.movie_details(conn, tt_new)
+        elif request.form.get('submit') == 'delete': # find movie with this tt and delete the movie
+            movieDict = crud.movie_details(conn, tt)
             crud.delete_movie(conn, tt_old)
             flash(f"Movie ({movieDict.get('title')}) was deleted successfully")
             return redirect(url_for('home'))
         else:
             flash(f"ERROR: neither update or delete")
-    movieDict = crud.movie_details(conn, tt)
+    else: # request.method == 'GET':
+        movieDict = crud.movie_details(conn, tt)
     return render_template('update_form.html', page_title='Fill in Missing Data', movieDict = movieDict)
 
 # You will probably not need the routes below, but they are here
 # just in case. Please delete them if you are not using them
 
-@app.route('/INSERT2/', methods=['GET','POST'])
-def INSERT2():
-    if request.method == 'GET':
-        return render_template(
-            'insert_form.html',
-            page_title = 'Insert Movie')
-    else: # Post - redirect
-        movieDict = request.form
-        conn = dbi.connect()
-        confirmation = crud.insert_movie(conn, movieDict) # Insert movie into database
-        # redirect to update page for reloads
-        tt = request.form.get('tt')
-        # redirect is a new import from flask
-        return redirect(url_for('update',tt=tt))
 
 @app.route('/country/<city>')
 def country(city):
@@ -186,7 +173,7 @@ if __name__ == '__main__':
         assert(port>1024)
     else:
         port = os.getuid()
-    db_to_use = 'je100_db' 
+    db_to_use = 'kb102_db' 
     print('will connect to {}'.format(db_to_use))
     dbi.conf(db_to_use)
     app.debug = True

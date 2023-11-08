@@ -1,7 +1,8 @@
 from flask import flash
 
 import cs304dbi as dbi
-myStaffId = 8620
+import os
+myStaffId = os.getuid()
 
 def find_incomplete_movies(conn):
     """
@@ -22,10 +23,9 @@ def update_movie(conn, formData, tt_old):
     Change the data associated with a movie whose tt is movDict.get('tt')
     Assumes the all data inputs are valid
     """
-    
     cursOld = dbi.dict_cursor(conn)
     cursNew = dbi.dict_cursor(conn)
-    tt_new = int(formData.get('movie-tt'))
+    tt_Form = int(formData.get('movie-tt'))
     cursOld.execute(# Find the movie's previous data
         """
         select tt, title, `release`, director, addedby
@@ -55,24 +55,29 @@ def update_movie(conn, formData, tt_old):
     #check that release year is a valid int
     newRelease, releaseSuccess = check_release_valid(conn, oldMovie.get('release'), movieData.get('movie-release'))
 
+    results = [directorSucess, ttIsAvail, staffSuccess, releaseSuccess]
+    print(f"directorSucess: {results[0]}, ttIsAvail: {results[1]}, staffSuccess: {results[2]}, releaseSuccess: {results[3]}")
     
-    #print(f"tt_old is: {type(tt_old)}, tt_new is {type(tt_new)}, is tt_new unique: {ttIsAvail}, checking == condition: {tt_old == tt_new}")
     # if tt has not changed or tt is unique, proceed
-    if (tt_old == tt_new) or (ttIsAvail):
+    if (tt_old == tt_Form) or (ttIsAvail):
+        print(f"tt_old: {tt_old}, tt_Form:{tt_Form}, ttIsAvail: {ttIsAvail}")
         # make those changes
-        # TODO: check for director accuracy and addedby accuracy, also check that tt is a valid number
-
         cursNew.execute(# Update movie with new data
         """
             update movie
             set tt = %s, title = %s, `release` = %s, director = %s, addedby = %s
             where tt = %s;
-        """, [tt_new, movieData.get('movie-title'), movieData.get('movie-release'), newDirector, newStaff, tt_old]
+        """, [tt_new, movieData.get('movie-title'), newRelease, newDirector, newStaff, tt_old]
         )
         conn.commit()
-        flash(f"TO DO: Movie ({movieData.get('movie-title')}) was updated successfully")   
+        # Flash the result to user
+        if not (True in results): # everything failed
+            flash(f"No changes to movie database were made")  
+        else: # something was updated to a valid value
+            flash(f"Movie ({movieData.get('movie-title')}) was updated successfully")
     else: # if tt is not unique (is associated with another show), tell app.py to flash an error
-        flash(f"Movie already exists.")
+        flash(f'Movie already exists')
+    return tt_new
 
 
 def check_tt_avail(conn, tt_current, tt_proposed):
@@ -80,19 +85,23 @@ def check_tt_avail(conn, tt_current, tt_proposed):
     Takes current tt and the proposed tt. If the proposed tt doesnt belong to an existing movie or belongs to an existing movie, returns the proposed tt
     If the new tt is not valid, then return the current tt
     """
-    # check whether the proposed tt is associated with another movie
-    ttTest = check_tt_exists(conn, tt_proposed)
-    if ttTest != None: # tt is associated with another movie
-        flash(f"Movie with ID {tt_proposed} already exists. Using current ID of {tt_current}")
+    if (str(tt_current) != str(tt_proposed)): # A change was proposed
+        ttTest = check_tt_exists(conn, tt_proposed) # is tt_proposed in use elsewhere?
+        if (ttTest != None): # proposed tt is associated with another movie
+            flash(f"Movie with ID {tt_proposed} already exists. Using current ID of {tt_current}")
+            return tt_current, False        
+        else: # tt_proposed is available
+            return tt_proposed, True
+    else: # tt has not changed
         return tt_current, False
-    else: # tt is available
-        return tt_proposed, True
 
 def check_release_valid(conn, release_current, release_proposed):
     """
     Takes current release year and the proposed release. If the proposed year is valid, returns the proposed year and true
     If the new release is not valid, then return the current release year and false
     """
+    if (str(release_current) == str(release_proposed)): # no change proposed
+        return release_current, False
     #convert to int
     try:
         release_proposed_int = int(release_proposed)
@@ -104,7 +113,7 @@ def check_release_valid(conn, release_current, release_proposed):
             return release_proposed, True
     except ValueError:
         print(f"Using {release_current}")
-        #flash(f"Year {release_proposed} is invalid, year must be a positive int. Using previous release of {release_current}")
+        flash(f"Year {release_proposed} is invalid, year must be a positive int. Using previous release of {release_current}")
         return release_current, False
 
 
@@ -113,6 +122,9 @@ def check_director_valid(conn, nm_current, nm_proposed):
     Takes current nm and the proposed nm. If the proposed nm is valid, returns the proposed nm
     If the new nm is not valid, then return the current nm
     """
+    # assume already valid if nm_current == nm_proposed:
+    if (nm_current == nm_proposed):
+        return nm_current, False
     # valid if director nm_proposed exists
     curs = dbi.dict_cursor(conn)
     curs.execute(
@@ -187,12 +199,16 @@ def check_addedby_exists(conn, addedby_current, addedby_proposed):
     If the proposed addedby is in the database, return proposed added by and true
     If the proposed addedby is not in the database, return current added by and false
     """
+    # if addedbys are idential, assume addedby_current is valid
+    if (str(addedby_current) == str(addedby_proposed)):
+        return addedby_current, False
+    # A change was proposed:
     curs = dbi.dict_cursor(conn)
     curs.execute( # search for the given addedby
         '''
         select uid from staff
         where uid = %s;
-        ''', [addedby]
+        ''', [addedby_proposed]
     )
     result = curs.fetchone()
     print(result)
@@ -220,7 +236,7 @@ def insert_movie(conn, formData):
 
 
 if __name__ == '__main__':
-    dbi.conf('je100_db')
+    dbi.conf('kb102_db')
     conn = dbi.connect()
     #print(movie_details(conn, 555))
     #print(delete_movie(conn, 555))
