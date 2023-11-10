@@ -21,11 +21,11 @@ def find_incomplete_movies(conn):
 def update_movie(conn, formData, tt_old):
     """
     Change the data associated with a movie whose tt is movDict.get('tt')
-    Assumes the all data inputs are valid
+    Checks validity of input data
     """
     cursOld = dbi.dict_cursor(conn)
     cursNew = dbi.dict_cursor(conn)
-    tt_Form = int(formData.get('movie-tt'))
+    tt_Form = formData.get('movie-tt')
     cursOld.execute(# Find the movie's previous data
         """
         select tt, title, `release`, director, addedby
@@ -40,8 +40,14 @@ def update_movie(conn, formData, tt_old):
     for elt in formData:
         if formData.get(elt) == 'None':
             movieData[elt] = None
+        elif formData.get(elt) == '':
+            movieData[elt] = None
         else:
             movieData[elt] = formData.get(elt)
+    
+    # check whether title has changed
+    newTitle = movieData.get('movie-title')
+    titleSuccess = (str(newTitle) != str(oldMovie.get('title')))
 
     # check that director exists in person table
     newDirector, directorSucess = check_director_valid(conn, oldMovie.get('director'), movieData.get('movie-director'))
@@ -55,11 +61,11 @@ def update_movie(conn, formData, tt_old):
     #check that release year is a valid int
     newRelease, releaseSuccess = check_release_valid(conn, oldMovie.get('release'), movieData.get('movie-release'))
 
-    results = [directorSucess, ttIsAvail, staffSuccess, releaseSuccess]
+    results = [directorSucess, ttIsAvail, staffSuccess, releaseSuccess, titleSuccess]
     print(f"directorSucess: {results[0]}, ttIsAvail: {results[1]}, staffSuccess: {results[2]}, releaseSuccess: {results[3]}")
     
     # if tt has not changed or tt is unique, proceed
-    if (tt_old == tt_Form) or (ttIsAvail):
+    if (str(tt_old) == str(tt_Form)) or (ttIsAvail):
         print(f"tt_old: {tt_old}, tt_Form:{tt_Form}, ttIsAvail: {ttIsAvail}")
         # make those changes
         cursNew.execute(# Update movie with new data
@@ -67,7 +73,7 @@ def update_movie(conn, formData, tt_old):
             update movie
             set tt = %s, title = %s, `release` = %s, director = %s, addedby = %s
             where tt = %s;
-        """, [tt_new, movieData.get('movie-title'), newRelease, newDirector, newStaff, tt_old]
+        """, [tt_new, newTitle, newRelease, newDirector, newStaff, tt_old]
         )
         conn.commit()
         # Flash the result to user
@@ -85,7 +91,10 @@ def check_tt_avail(conn, tt_current, tt_proposed):
     Takes current tt and the proposed tt. If the proposed tt doesnt belong to an existing movie or belongs to an existing movie, returns the proposed tt
     If the new tt is not valid, then return the current tt
     """
-    if (str(tt_current) != str(tt_proposed)): # A change was proposed
+    if tt_proposed == None: # empty tt given
+        flash(f"Movie ID must not be empty. Using current ID of {tt_current}")
+        return tt_current, False
+    elif (str(tt_current) != str(tt_proposed)): # A change was proposed
         ttTest = check_tt_exists(conn, tt_proposed) # is tt_proposed in use elsewhere?
         if (ttTest != None): # proposed tt is associated with another movie
             flash(f"Movie with ID {tt_proposed} already exists. Using current ID of {tt_current}")
@@ -111,7 +120,7 @@ def check_release_valid(conn, release_current, release_proposed):
         else:
             print(f"{release_proposed_int} is valid int")
             return release_proposed, True
-    except ValueError:
+    except: # ValueError:
         print(f"Using {release_current}")
         flash(f"Year {release_proposed} is invalid, year must be a positive int. Using previous release of {release_current}")
         return release_current, False
@@ -123,8 +132,10 @@ def check_director_valid(conn, nm_current, nm_proposed):
     If the new nm is not valid, then return the current nm
     """
     # assume already valid if nm_current == nm_proposed:
-    if (nm_current == nm_proposed):
+    if (str(nm_current) == str(nm_proposed)):
         return nm_current, False
+    elif (nm_proposed == None): # data was removed
+        return nm_proposed, True
     # valid if director nm_proposed exists
     curs = dbi.dict_cursor(conn)
     curs.execute(
@@ -176,8 +187,9 @@ def movie_details(conn, tt):
         ''', [tt]
     )
     movDict = cursMovie.fetchone()
-    director = cursDirector.fetchone()
-    movDict['directorName'] = director.get('name') if (director != None) else ('none specified')
+    if movDict != None:
+        director = cursDirector.fetchone()
+        movDict['directorName'] = director.get('name') if (director != None) else ('none specified')  
     return movDict
 
 def check_tt_exists(conn, tt):
@@ -222,6 +234,7 @@ def insert_movie(conn, formData):
     """
     Insert a movie row into movie table
     using tt, title, and release year
+    Assumes that title, addedby, and tt are filled in
     """
     curs = dbi.dict_cursor(conn)
     curs.execute( # insert given movie into movie table

@@ -39,22 +39,47 @@ def insert():
         return render_template(
             'insert_form.html',
             page_title = 'Insert Movie')
-    else: # Post - redirect
-        movieDict = request.form
+    else: # Post -> redirect
+        movieDict = request.form.to_dict()
         conn = dbi.connect()
+
+        ## tt checking
         tt = movieDict.get('movie-tt')
+        if len(tt) < 1: # box was left blank
+            print(f"User forgot to fill out a tt")
+            flash(f"ERROR: Movie ID must not be empty")
+            return redirect(url_for('insert'))
+        elif not tt.isdigit(): 
+            # checks that tt is a digit value
+            flash(f'ERROR: movie ID must be a positive integer number.  Got {tt}')
+            return redirect(url_for('insert'))
         existingMovieTitle = crud.check_tt_exists(conn, tt)
         # Before inserting, check that a movie with this tt does not already exist in the database
         if existingMovieTitle != None: # a movie with this tt already exists
+            print(f"The user's tt is already in use")
             title = existingMovieTitle.get('title')
             flash(f"ERROR: movie exists; The movie, {title}, with tt = {tt} is already in database.")
-        else: # No movie with this tt exists in the database
+            # redirect to update page for reloads
+            return redirect(url_for('update',tt=tt))
+
+        ## title checking
+        elif len(movieDict.get('movie-title')) < 1:
+            print(f"The user forgot to provide a title")
+            flash(f"ERROR: a movie title is required")
+            return redirect(url_for('insert'))
+        # No movie with this tt exists in the database, proceed
+        else: 
+            # Convert blank boxes to None (release year is the only possibility)
+            for key in movieDict:
+                if movieDict[key] == "": # the user didn't answer this question
+                    movieDict[key] = None
+            # Insert the data into movieDict
             confirmation = crud.insert_movie(conn, movieDict) # Insert movie into database
             print(confirmation) # to console
             title = movieDict.get('movie-title')
             flash(f"Movie {title} inserted.")
-        # redirect to update page for reloads
-        return redirect(url_for('update',tt=tt))
+            # redirect to update page for reloads
+            return redirect(url_for('update',tt=tt))
 
 @app.route('/search/')
 def search():
@@ -75,7 +100,9 @@ def select():
     conn = dbi.connect()
     if request.method == 'GET':
         incomplete_movies = crud.find_incomplete_movies(conn)
-        return render_template('select_menu.html', page_title='Select Incomplete Movie', data = incomplete_movies)
+        return render_template('select_menu.html', 
+            page_title='Select Incomplete Movie', 
+            data = incomplete_movies)
     else: # method = post
         tt = request.form.get('menu-tt')
         return redirect(url_for('update',tt=tt))
@@ -107,6 +134,9 @@ def update(tt):
             flash(f"ERROR: neither update or delete")
     else: # request.method == 'GET':
         movieDict = crud.movie_details(conn, tt)
+        if movieDict == None:
+            flash(f'{tt} is not a valid tt')
+            return redirect(url_for('home'))
     return render_template('update_form.html', page_title='Fill in Missing Data', movieDict = movieDict)
 
 

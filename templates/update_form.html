@@ -3,7 +3,7 @@
 {% block main_content %}
 <h1>Update Movie</h1>
 
-  <p>Use "None" or "null" to set a field to null. Only Title, Release Year and Director can be null.
+  <p>Only Title, Release Year and Director can be null.
 
     <form method=POST action="{{url_for('update', tt=movieDict.tt)}}">
       <table>
