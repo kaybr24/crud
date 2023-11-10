@@ -4,7 +4,7 @@
 HTML {
     --color-header: #007ea9;  /* color for H1-H6 and others. was deepskyblue but poor contrast. */
     --color-hilite: #b50000;  /* was red, but this avoids WAVE contrast errors */ 
-    --color-focus: #56B929;
+    --color-focus: rgb(171, 189, 222);
     --font-family: Verdana;
     font-family: var(--font-family)
 }
@@ -27,52 +27,15 @@ h2, h3 {
 }
     
 
-/* for a simple navbar. Talk to Scott if you want drop-downs. */
-nav > ul {
-    display: flex;
-    flex-direction: row;
-}
-
-nav ul {
-    list-style-type: none;
-    margin: 0px;
-    padding: 0px;
-}
-
-nav > ul > li {
-    flex: 0 0 auto;
-    width: 15em; 
-}
-
-nav button, nav a {
-    display: block;
-    box-sizing: border-box; /* easier to make button and A the same size */
-    width: 100%;
-    height: 40px;
-    padding: 0px;
-    padding-bottom: 5px;
-    background-color: var(--color-header); /* was #3498db */
-    border: 2px solid black;
-    border-radius: 5px;
-    cursor: pointer;
-    /* Firefox uses font -apple-system unless I repeat the font spec here. */
-    font-family: var(--font-family);
+li:hover {
     font-weight: bold;
-    font-size: 1.4rem;
 }
 
-/* Only the top-level buttons are centered; lower ones are left-aligned. */
-nav > ul > li > button , nav > ul > li > a {
-    text-align: center;
+form {  
+    background-color: rgb(202, 218, 223);
+    border: 2px solid rgb(16, 19, 20);
+    border-radius: 25px;
+    padding: 15px;
+    margin: 20px;
+    width: fit-content;
 }
-
-/* because of the margin trick, this can only be used for the last element */
-
-nav li.right {
-    margin-left: auto;
-}
-
-nav button:hover, button:focus, nav a:hover, nav a:focus {
-    background-color: var(--color-focus);
-}
-
